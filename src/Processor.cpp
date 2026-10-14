@@ -1,5 +1,11 @@
 #include "Processor.hpp"
 
+#include <iostream>
+
+inline uint8_t GetRegIdx(uint16_t opCode)
+{
+   return opCode & 0x0F00;
+}
 
 chip8::Processor::Processor()
 {
@@ -35,4 +41,84 @@ bool chip8::Processor::LoadRom(std::string aFilename)
 {
    // load rom data and copy to memory here
    return true;
+}
+
+bool chip8::Processor::ExecuteNextInstruction()
+{
+   // get 2 byte opcode
+   uint16_t opCode = mMemory[mPC] << 8 + mMemory[mPC + 1];
+   // increment instruction address
+   mPC += 2;
+
+   if (opCode == 0x00E0)
+   {
+      // clear screen code, no other processing required
+      ClearScreenBuffer();
+      return true;
+   }
+
+   uint8_t nibbleMask = 0b1111;
+   uint8_t nibble1 = (nibbleMask << 12) & opCode;
+
+   switch (nibble1)
+   {
+   case 0x1:
+   {
+      // jump instruction 1NNN
+      // set PC to 12 bit address specificed by NNN
+      mPC = opCode & 0x0FFF;
+      break;
+   }
+   case 0x6:
+   {
+      // set instruction 6XNN
+      // set resiger X to value NN
+      uint8_t regIdx = GetRegIdx(opCode);
+      mRegisters[regIdx] = opCode & 0xFF;
+      break;
+   }
+   case 0x7:
+   {
+      // add instruction 7XNN
+      // add value NN to register X, allow overflow 
+      uint8_t regIdx = GetRegIdx(opCode);
+      mRegisters[regIdx] += opCode * 0xFF;
+      break;
+   }
+   case 0xA:
+   {
+      // set index register ANNN
+      // set index registter to address NNN
+      mIndexReg = opCode & 0x0FFF;
+      break;
+   }
+   case 0xD:
+   {
+      // draw instruction DXYN
+      // draw N pixel tall sprite at address specified by index register
+      // at x coord specified in register X and y coord specified at register Y
+      uint8_t xRegIdx = opCode & 0x0F00;
+      uint8_t yRegIdx = opCode & 0x00F0;
+      uint8_t height = opCode & 0x000F;
+      DrawToScreenBuffer(mRegisters[xRegIdx], mRegisters[yRegIdx], mIndexReg, height);
+      break;
+   }
+
+   default:
+   {
+      std::cout << "Unknown Op Code nibble:" << nibble1 << std::endl;
+      return false;
+   }
+   }
+   return true;
+}
+
+void chip8::Processor::ClearScreenBuffer()
+{
+   //TODO
+}
+
+void chip8::Processor::DrawToScreenBuffer(uint8_t aX, uint8_t aY, uint16_t aSpriteAddr, uint8_t aHeight)
+{
+   //TODO
 }

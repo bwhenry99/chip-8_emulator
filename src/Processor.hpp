@@ -14,6 +14,9 @@ public:
    ~Processor();
 
    bool LoadRom(std::string aFilename);
+   bool ExecuteNextInstruction();
+   void ClearScreenBuffer();
+   void DrawToScreenBuffer(uint8_t aX, uint8_t aY, uint16_t aSpriteAddr, uint8_t aHeight);
 
 private:
    // number of instructions processed per second
@@ -28,5 +31,6 @@ private:
 
    // processor registers V0 - VF
    uint8_t mRegisters[16] = { 0 };
+   uint16_t mIndexReg = 0;
 };
 }
