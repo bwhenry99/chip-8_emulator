@@ -1,6 +1,8 @@
 #include "Processor.hpp"
 
+#include <fstream>
 #include <iostream>
+
 
 inline uint8_t GetRegIdx(uint16_t opCode)
 {
@@ -39,7 +41,34 @@ chip8::Processor::~Processor()
 
 bool chip8::Processor::LoadRom(std::string aFilename)
 {
-   // load rom data and copy to memory here
+   std::ifstream rom(aFilename, std::ios::binary | std::ios::ate);
+
+   if (!rom.is_open())
+   {
+      std::cout << "Failed to load ROM" << std::endl;
+      return false;
+   }
+
+   // get rom size
+   size_t size = rom.tellg();
+
+   //return to front
+   rom.seekg(0, std::ios::beg);
+
+   // make sure the ROM will fit into the allocated memory
+   if (size + 0x200 >= 4096)
+   {
+      std::cout << "ROM too large for memory" << std::endl;
+      return false;
+   }
+
+   if (rom.read(reinterpret_cast<char*>(&mMemory[0x200]), size))
+   {
+      std::cout << "Successfully loaded ROM" << std::endl;
+   }
+
+   // set instruction pointer to start of ROM
+   mPC = 0x200;
    return true;
 }
 
@@ -58,7 +87,7 @@ bool chip8::Processor::ExecuteNextInstruction()
    }
 
    uint8_t nibbleMask = 0b1111;
-   uint8_t nibble1 = (nibbleMask << 12) & opCode;
+   uint8_t nibble1 = ((nibbleMask << 12) & opCode) >> 12;
 
    switch (nibble1)
    {
@@ -99,7 +128,7 @@ bool chip8::Processor::ExecuteNextInstruction()
       // at x coord specified in register X and y coord specified at register Y
       uint8_t xRegIdx = opCode & 0x0F00;
       uint8_t yRegIdx = opCode & 0x00F0;
-      uint8_t height = opCode & 0x000F;
+      uint8_t height  = opCode & 0x000F;
       DrawToScreenBuffer(mRegisters[xRegIdx], mRegisters[yRegIdx], mIndexReg, height);
       break;
    }
