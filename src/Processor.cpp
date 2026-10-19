@@ -1,7 +1,10 @@
 #include "Processor.hpp"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+
+#include <raylib.h>
 
 
 inline uint8_t GetRegIdx(uint16_t opCode)
@@ -32,6 +35,10 @@ chip8::Processor::Processor()
    };
 
    std::memcpy(&mMemory[cFONT_START_ADDRESS], &font, 5 * 16);
+
+   // initiialize frame buffer and clear to black
+   mFrameBuffer = new Color[64 * 32];
+   std::fill(mFrameBuffer, mFrameBuffer + (64 * 32), BLACK);
 }
 
 chip8::Processor::~Processor()
@@ -75,7 +82,7 @@ bool chip8::Processor::LoadRom(std::string aFilename)
 bool chip8::Processor::ExecuteNextInstruction()
 {
    // get 2 byte opcode
-   uint16_t opCode = mMemory[mPC] << 8 + mMemory[mPC + 1];
+   uint16_t opCode = (static_cast<uint16_t>(mMemory[mPC]) << 8) + mMemory[mPC + 1];
    // increment instruction address
    mPC += 2;
 
@@ -144,7 +151,7 @@ bool chip8::Processor::ExecuteNextInstruction()
 
 void chip8::Processor::ClearScreenBuffer()
 {
-   //TODO
+   std::fill(mFrameBuffer, mFrameBuffer + (64 * 32), BLACK);
 }
 
 void chip8::Processor::DrawToScreenBuffer(uint8_t aX, uint8_t aY, uint16_t aSpriteAddr, uint8_t aHeight)
