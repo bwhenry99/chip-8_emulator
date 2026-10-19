@@ -9,7 +9,17 @@
 
 inline uint8_t GetRegIdx(uint16_t opCode)
 {
-   return opCode & 0x0F00;
+   return (opCode & 0x0F00) >> 8;
+}
+
+bool IsBlack(Color aColor)
+{
+   return aColor.r == 0 && aColor.g == 0 && aColor.b == 0;
+}
+
+bool IsWhite(Color aColor)
+{
+   return aColor.r == 255 && aColor.g == 255 && aColor.b == 255;
 }
 
 chip8::Processor::Processor()
@@ -43,7 +53,7 @@ chip8::Processor::Processor()
 
 chip8::Processor::~Processor()
 {
-
+   delete mFrameBuffer;
 }
 
 bool chip8::Processor::LoadRom(std::string aFilename)
@@ -118,7 +128,7 @@ bool chip8::Processor::ExecuteNextInstruction()
       // add instruction 7XNN
       // add value NN to register X, allow overflow 
       uint8_t regIdx = GetRegIdx(opCode);
-      mRegisters[regIdx] += opCode * 0xFF;
+      mRegisters[regIdx] += opCode & 0xFF;
       break;
    }
    case 0xA:
@@ -133,8 +143,8 @@ bool chip8::Processor::ExecuteNextInstruction()
       // draw instruction DXYN
       // draw N pixel tall sprite at address specified by index register
       // at x coord specified in register X and y coord specified at register Y
-      uint8_t xRegIdx = opCode & 0x0F00;
-      uint8_t yRegIdx = opCode & 0x00F0;
+      uint8_t xRegIdx = (opCode & 0x0F00) >> 8;
+      uint8_t yRegIdx = (opCode & 0x00F0) >> 4;
       uint8_t height  = opCode & 0x000F;
       DrawToScreenBuffer(mRegisters[xRegIdx], mRegisters[yRegIdx], mIndexReg, height);
       break;
@@ -156,5 +166,47 @@ void chip8::Processor::ClearScreenBuffer()
 
 void chip8::Processor::DrawToScreenBuffer(uint8_t aX, uint8_t aY, uint16_t aSpriteAddr, uint8_t aHeight)
 {
-   //TODO
+   // constrain starting point to screen space
+   uint8_t x = aX % 64;
+   uint8_t y = aY % 32;
+
+   // set flag register to 0
+   mRegisters[0xF] = 0;
+
+   // for the height of the sprite
+   for (uint8_t i = 0; i < aHeight; i++)
+   {
+      uint8_t row = y + i;
+      if (row >= 32)
+      {
+         // row index out of bounds, break
+         break;
+      }
+      uint8_t spriteRow = mMemory[aSpriteAddr + i];
+      // for the 8 bit width of the sprite
+      for (uint8_t j = 0; j <= 7; j++)
+      {
+         uint8_t col = x + j;
+         if (col >= 64)
+         {
+            // colunm index out of bounds, break
+            break;
+         }
+
+         // if the sprite draws to the point in this row
+         int index = col + (64 * row);
+         if (spriteRow & (0b1 << (7 - j)))
+         {
+            if (IsBlack(mFrameBuffer[col + (64 * row)]))
+            {
+               mFrameBuffer[col + (64 * row)] = WHITE;
+            }
+            else if (IsWhite(mFrameBuffer[col + (64 * row)]))
+            {
+               mFrameBuffer[col + (64 * row)] = BLACK;
+               mRegisters[0xF] = 1;
+            }
+         }
+      }
+   }
 }

@@ -43,7 +43,7 @@ int main()
       BeginDrawing();
 
       Rectangle sourceRec = { 0.0f, 0.0f, (float)64, (float)32 };
-      Rectangle destRec = { 0.0f, 0.0f, (float)cVIEW_WIDTH, (float)cVIEW_WIDTH };
+      Rectangle destRec = { 0.0f, 0.0f, (float)cVIEW_WIDTH, (float)cVIEW_HEIGHT };
       Vector2 origin = { 0.0f, 0.0f };
       float rotation = 0.0f;
 
