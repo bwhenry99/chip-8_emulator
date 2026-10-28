@@ -3,13 +3,19 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <utility>
 
 #include <raylib.h>
 
 
-inline uint8_t GetRegIdx(uint16_t opCode)
+inline uint8_t GetRegIdx(uint16_t aOpCode)
 {
-   return (opCode & 0x0F00) >> 8;
+   return (aOpCode & 0x0F00) >> 8;
+}
+
+inline std::pair<uint8_t, uint8_t> Get2RegIdx(uint16_t aOpCode)
+{
+   return { (aOpCode & 0x0F00) >> 8, (aOpCode & 0x00F0) >> 4 };
 }
 
 bool IsBlack(Color aColor)
@@ -103,8 +109,23 @@ bool chip8::Processor::ExecuteNextInstruction()
       return true;
    }
 
-   uint8_t nibbleMask = 0b1111;
-   uint8_t nibble1 = ((nibbleMask << 12) & opCode) >> 12;
+   if (opCode == 0x00EE)
+   {
+      // return from subroutine opcode
+      // pop entry from stack and set PC to retrieved address
+      
+      if (mStackIndex < 0)
+      {
+         // we're not in a subroutine and there's no address to pop from the stack
+         return false;
+      }
+
+      mPC = mStack[mStackIndex];
+      mStackIndex--;
+      return true;
+   }
+
+   uint8_t nibble1 = (0xF000 & opCode) >> 12;
 
    switch (nibble1)
    {
@@ -113,6 +134,53 @@ bool chip8::Processor::ExecuteNextInstruction()
       // jump instruction 1NNN
       // set PC to 12 bit address specificed by NNN
       mPC = opCode & 0x0FFF;
+      break;
+   }
+   case 0x2:
+   {
+      // subroutine instruction 2NNN
+      // add current PC to stack, increment stack index, set PC to address NNN
+      mStackIndex++;
+      mStack[mStackIndex] = mPC;
+      mPC = opCode & 0x0FFF;
+      break;
+   }
+   case 0x3:
+   {
+      // skip instruction 3XNN
+      // skip next instruction if value in register X is equal to NN
+      uint8_t regIdx = GetRegIdx(opCode);
+      uint16_t value = opCode & 0x00FF;
+      if (mRegisters[regIdx] == value)
+      {
+         // increment PC a second time to skip next instruction
+         mPC += 2;
+      }
+      break;
+    }
+   case 0x4:
+   {
+      // skip instruction 4XNN
+      // skip next instruction if value in register X is not equal to NN
+      uint8_t regIdx = GetRegIdx(opCode);
+      uint16_t value = opCode & 0x00FF;
+      if (mRegisters[regIdx] != value)
+      {
+         // increment PC a second time to skip next instruction
+         mPC += 2;
+      }
+      break;
+   }
+   case 0x5:
+   {
+      // skip instruction 5XY0
+      // skip next instruction if values in registers X and Y are equal
+      std::pair<uint8_t, uint8_t> regIdxs = Get2RegIdx(opCode);
+      if (mRegisters[regIdxs.first] == mRegisters[regIdxs.second])
+      {
+         // increment PC a second time to skip next instruction
+         mPC += 2;
+      }
       break;
    }
    case 0x6:
@@ -131,6 +199,123 @@ bool chip8::Processor::ExecuteNextInstruction()
       mRegisters[regIdx] += opCode & 0xFF;
       break;
    }
+   case 0x8:
+   {
+      // family of register instructions 8XY#
+      // # specifies instruction to be exeucted
+      std::pair<uint8_t, uint8_t> regIdxs = Get2RegIdx(opCode);
+      uint8_t instruction = 0x000F & opCode;
+
+      switch (instruction)
+      {
+      case 0:
+      {
+         // set intruction 8XY0
+         // set value in register X to value in register Y
+         mRegisters[regIdxs.first] = mRegisters[regIdxs.second];
+         break;
+      }
+      case 1:
+      {
+         // binary or instruction 8XY1
+         // set value in register X to binary or of values in register X and Y
+         mRegisters[regIdxs.first] = mRegisters[regIdxs.first] | mRegisters[regIdxs.second];
+         break;
+      }
+      case 2:
+      {
+         // binary and instruction 8XY2
+         // set value in register X to binary and of values in register X and Y
+         mRegisters[regIdxs.first] = mRegisters[regIdxs.first] & mRegisters[regIdxs.second];
+         break;
+      }
+      case 3:
+      {
+         // binary or instruction 8XY1
+         // set value in register X to binary or of values in register X and Y
+         mRegisters[regIdxs.first] = mRegisters[regIdxs.first] ^ mRegisters[regIdxs.second];
+         break;
+      }
+      case 4:
+      {
+         // add instruction 8XY4
+         // sets register X to sum of values in registers X and Y, sets carry flag on overflow
+
+         // set carry flag to 0
+         mRegisters[0xF] = 0;
+         // sum to 16 bit int to catch overflow
+         uint16_t sum = mRegisters[regIdxs.first] + mRegisters[regIdxs.second];
+         // if value overflows 8 bit set carry flag to 1
+         if (sum > 255)
+         {
+            mRegisters[0xF] = 1;
+         }
+         // move sum to register X, cast to 8 bit value (data loss is captured in carry flag)
+         mRegisters[regIdxs.first] = static_cast<uint8_t>(sum);
+         break;
+      }
+      case 5:
+      {
+         // substract instruction 8XY5
+         // sets register X to value in register X - value in register Y, sets carry flag on if no underflow
+         
+         // set carry flag to 1
+         mRegisters[0xF] = 1;
+
+         // if subtraction will not underflow, set carry flag to 0
+         if (mRegisters[regIdxs.first] >= mRegisters[regIdxs.second])
+         {
+            mRegisters[0xF] = 0;
+         }
+
+         // set register X to value of subtraction
+         mRegisters[regIdxs.first] = mRegisters[regIdxs.first] - mRegisters[regIdxs.second];
+         break;
+      }
+      case 6:
+      {
+
+         break;
+      }
+      case 7:
+      {
+         // substract instruction 8XY
+         // sets register X to value in register Y - value in register X, sets carry flag on if no underflow
+
+         // set carry flag to 1
+         mRegisters[0xF] = 1;
+
+         // if subtraction will not underflow, set carry flag to 0
+         if (mRegisters[regIdxs.second] >= mRegisters[regIdxs.first])
+         {
+            mRegisters[0xF] = 0;
+         }
+
+         // set register X to value of subtraction
+         mRegisters[regIdxs.first] = mRegisters[regIdxs.second] - mRegisters[regIdxs.first];
+         break;
+      }
+      default:
+      {
+         std::cout << "Unknown set instruction type." << std::endl;
+         return false;
+      }
+      }
+      break;
+
+   }
+   case 0x9:
+   {
+      // skip instruction 9XY0
+      // skip next instruction if values in registers X and Y are not equal
+      std::pair<uint8_t, uint8_t> regIdxs = Get2RegIdx(opCode);
+      if (mRegisters[regIdxs.first] != mRegisters[regIdxs.second])
+      {
+         // increment PC a second time to skip next instruction
+         mPC += 2;
+      }
+      break;
+   }
    case 0xA:
    {
       // set index register ANNN
@@ -143,10 +328,9 @@ bool chip8::Processor::ExecuteNextInstruction()
       // draw instruction DXYN
       // draw N pixel tall sprite at address specified by index register
       // at x coord specified in register X and y coord specified at register Y
-      uint8_t xRegIdx = (opCode & 0x0F00) >> 8;
-      uint8_t yRegIdx = (opCode & 0x00F0) >> 4;
+      std::pair<uint8_t, uint8_t> regIdxs = Get2RegIdx(opCode);
       uint8_t height  = opCode & 0x000F;
-      DrawToScreenBuffer(mRegisters[xRegIdx], mRegisters[yRegIdx], mIndexReg, height);
+      DrawToScreenBuffer(mRegisters[regIdxs.first], mRegisters[regIdxs.second], mIndexReg, height);
       break;
    }
 

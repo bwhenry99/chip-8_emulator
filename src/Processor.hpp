@@ -30,7 +30,7 @@ private:
    uint16_t mPC = 0;
    // stack of memory addreses for subroutine execution
    uint16_t mStack[8] = { 0 }; 
-   uint8_t mStackIndex = 0;
+   int8_t mStackIndex = -1;
 
    // processor registers V0 - VF
    uint8_t mRegisters[16] = { 0 };
