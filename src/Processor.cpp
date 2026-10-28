@@ -394,3 +394,9 @@ void chip8::Processor::DrawToScreenBuffer(uint8_t aX, uint8_t aY, uint16_t aSpri
       }
    }
 }
+
+void chip8::Processor::SetPressedKeys(KeysPressed_t& aPressedKeys)
+{
+   mKeys.keyPressed = aPressedKeys.keyPressed;
+   std::memcpy(&mKeys.key, &aPressedKeys.key, 16);
+}

@@ -4,6 +4,12 @@
 struct Color;
 typedef Color Color;
 
+typedef struct KeysPressed
+{
+   bool keyPressed = false;
+   bool key[16] = { false };
+} KeysPressed_t;
+
 namespace chip8
 {
 static const uint16_t cFONT_START_ADDRESS = 0x50;
@@ -20,6 +26,7 @@ public:
    Color* GetFrameBuffer() { return mFrameBuffer; };
    void ClearScreenBuffer();
    void DrawToScreenBuffer(uint8_t aX, uint8_t aY, uint16_t aSpriteAddr, uint8_t aHeight);
+   void SetPressedKeys(KeysPressed_t& aPressedKeys);
 
 private:
    // number of instructions processed per second
@@ -37,5 +44,7 @@ private:
    uint16_t mIndexReg = 0;
 
    Color* mFrameBuffer = nullptr;
+
+   KeysPressed_t mKeys;
 };
 }
