@@ -29,87 +29,87 @@ int main()
       //TODO set up a better clock with seperate screen and cpu event handling
 
       // Handle pressed keys
-      KeyPressed_t keys;
+      KeyPressed_t key;
 
       if (IsKeyPressed(KeyboardKey::KEY_ONE))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x1;
+         key.keyPressed = true;
+         key.keyValue = 0x1;
       }
       if (IsKeyPressed(KeyboardKey::KEY_TWO))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x2;
+         key.keyPressed = true;
+         key.keyValue = 0x2;
       }
       if (IsKeyPressed(KeyboardKey::KEY_THREE))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x3;
+         key.keyPressed = true;
+         key.keyValue = 0x3;
       }
       if (IsKeyPressed(KeyboardKey::KEY_Q))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x4;
+         key.keyPressed = true;
+         key.keyValue = 0x4;
       }
       if (IsKeyPressed(KeyboardKey::KEY_W))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x5;
+         key.keyPressed = true;
+         key.keyValue = 0x5;
       }
       if (IsKeyPressed(KeyboardKey::KEY_E))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x6;
+         key.keyPressed = true;
+         key.keyValue = 0x6;
       }
       if (IsKeyPressed(KeyboardKey::KEY_A))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x7;
+         key.keyPressed = true;
+         key.keyValue = 0x7;
       }
       if (IsKeyPressed(KeyboardKey::KEY_S))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x8;
+         key.keyPressed = true;
+         key.keyValue = 0x8;
       }
       if (IsKeyPressed(KeyboardKey::KEY_D))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x9;
+         key.keyPressed = true;
+         key.keyValue = 0x9;
       }
       if (IsKeyPressed(KeyboardKey::KEY_Z))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0xA;
+         key.keyPressed = true;
+         key.keyValue = 0xA;
       }
       if (IsKeyPressed(KeyboardKey::KEY_X))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0x0;
+         key.keyPressed = true;
+         key.keyValue = 0x0;
       }
       if (IsKeyPressed(KeyboardKey::KEY_C))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0xB;
+         key.keyPressed = true;
+         key.keyValue = 0xB;
       }
       if (IsKeyPressed(KeyboardKey::KEY_FOUR))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0xC;
+         key.keyPressed = true;
+         key.keyValue = 0xC;
       }
       if (IsKeyPressed(KeyboardKey::KEY_E))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0xD;
+         key.keyPressed = true;
+         key.keyValue = 0xD;
       }
       if (IsKeyPressed(KeyboardKey::KEY_D))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0xE;
+         key.keyPressed = true;
+         key.keyValue = 0xE;
       }
       if (IsKeyPressed(KeyboardKey::KEY_C))
       {
-         keys.keyPressed = true;
-         keys.keyValue = 0xF;
+         key.keyPressed = true;
+         key.keyValue = 0xF;
       }
 
       proc.SetPressedKey(key);

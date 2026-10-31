@@ -49,6 +49,6 @@ private:
 
    Color* mFrameBuffer = nullptr;
 
-   KeysPressed_t mKey;
+   KeyPressed_t mKey;
 };
 }

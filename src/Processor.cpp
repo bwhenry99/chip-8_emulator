@@ -378,9 +378,10 @@ bool chip8::Processor::ExecuteNextInstruction()
          break;
       }
       case 0x0A:
+      {
          // get key instruction FX0A
          // puts hex value of currently pressed key in register X
-         // insctucion is blocking, if no key is pressed repeat until input is received
+         // instruction is blocking, if no key is pressed repeat until input is received
 
          if (!mKey.keyPressed)
          {
@@ -390,7 +391,38 @@ bool chip8::Processor::ExecuteNextInstruction()
          }
 
          mRegisters[regIdx] = mKey.keyValue;
+         break;
+      }
+      case 0x29:
+      {
+         // font character instruction FX29
+         // Index register is set to location of character in register X
+         mIndexReg = cFONT_START_ADDRESS + (5 * mRegisters[regIdx]);
+         break;
+      }
+      case 0x33:
+      {
+         // decimal conversion instruction FX33
+         // convert value in register X to 3 decimal digits and store at memory address
+         // specified by index register
 
+         uint8_t value = mRegisters[regIdx];
+         mMemory[mIndexReg]     = value / 100;
+         mMemory[mIndexReg + 1] = (value / 10) % 10;
+         mMemory[mIndexReg + 2] = value % 10;
+         break;
+      }
+      case 0x55:
+      {
+
+      }
+      case 0x65:
+      {
+
+      }
+      default:
+         std::cout << "Unknown Op Code with nibble F: " << instruction << std::endl;
+         return false;
       }
    }
    default:
