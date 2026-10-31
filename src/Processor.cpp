@@ -333,7 +333,66 @@ bool chip8::Processor::ExecuteNextInstruction()
       DrawToScreenBuffer(mRegisters[regIdxs.first], mRegisters[regIdxs.second], mIndexReg, height);
       break;
    }
+   case 0xF:
+   {
+      // family of instructions FX##
+      // X is a register index and ## specifies the instrucion to be executed
 
+      uint8_t regIdx = GetRegIdx(opCode);
+      uint8_t instruction = opCode & 0x00FF;
+
+      switch (instruction)
+      {
+      case 0x07:
+      {
+         // timer instruction FX07
+         // set value in register VX to current value of delay timer
+         mRegisters[regIdx] = mDelayTimer;
+         break;
+      }
+      case 0x15:
+      {
+         // timer instruction FX15
+         // set delay timer to value in register X
+         mDelayTimer = mRegisters[regIdx];
+         break;
+      }
+      case 0x18:
+      {
+         // timer instruction FX18
+         // sets sound timer to value in register X
+         mSoundTimer = mRegisters[regIdx];
+         break;
+      }
+      case 0x1E:
+      {
+         // add to index instructions FX1E
+         // add value in register X to register index
+         // if the value exceeds 0x1000 set the carry flag
+         mIndexReg += mRegisters[regIdx];
+
+         if (mIndexReg > 0x1000)
+         {
+            mRegisters[0xF] = 1;
+         }
+         break;
+      }
+      case 0x0A:
+         // get key instruction FX0A
+         // puts hex value of currently pressed key in register X
+         // insctucion is blocking, if no key is pressed repeat until input is received
+
+         if (!mKey.keyPressed)
+         {
+            // decrement instruction pointer by 2 to repeat instruction
+            mPC -= 2;
+            break;
+         }
+
+         mRegisters[regIdx] = mKey.keyValue;
+
+      }
+   }
    default:
    {
       std::cout << "Unknown Op Code nibble:" << nibble1 << std::endl;
@@ -395,8 +454,8 @@ void chip8::Processor::DrawToScreenBuffer(uint8_t aX, uint8_t aY, uint16_t aSpri
    }
 }
 
-void chip8::Processor::SetPressedKeys(KeysPressed_t& aPressedKeys)
+void chip8::Processor::SetPressedKey(KeyPressed_t& aPressedKey)
 {
-   mKeys.keyPressed = aPressedKeys.keyPressed;
-   std::memcpy(&mKeys.key, &aPressedKeys.key, 16);
+   mKey.keyPressed = aPressedKey.keyPressed;
+   mKey.keyValue = aPressedKey.keyValue;
 }
