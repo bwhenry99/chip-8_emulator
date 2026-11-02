@@ -414,11 +414,39 @@ bool chip8::Processor::ExecuteNextInstruction()
       }
       case 0x55:
       {
+         // store in memory instruction FX55
+         // stores values in registers 0 through X (inclusive) in memory at address
+         // specified by index register
+         // Legacy Behavior: updates value in index register to final address wirtten + 1
 
+         for (uint8_t i = 0; i <= regIdx; i++)
+         {
+            mMemory[mIndexReg + i] = mRegisters[i];
+         }
+
+         if (mLegacyInstructionBehavior)
+         {
+            mIndexReg += regIdx + 1;
+         }
+         break;
       }
       case 0x65:
       {
+         // read from memory instruction FX65
+         // retrieves values from memory at address specified by index register
+         // and stored them in registers 0 through X (inclusive)
+         // Legacy Behavior: updates value stored in index register to final address read + 1
 
+         for (uint8_t i = 0; i <= regIdx; i++)
+         {
+            mRegisters[i] = mMemory[mIndexReg + i];
+         }
+
+         if (mLegacyInstructionBehavior)
+         {
+            mIndexReg += regIdx + 1;
+         }
+         break;
       }
       default:
          std::cout << "Unknown Op Code with nibble F: " << instruction << std::endl;

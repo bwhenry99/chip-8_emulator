@@ -50,5 +50,6 @@ private:
    Color* mFrameBuffer = nullptr;
 
    KeyPressed_t mKey;
+   bool mLegacyInstructionBehavior = false;
 };
 }
